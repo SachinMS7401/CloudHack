@@ -1,0 +1,118 @@
+# note: YAML definitions for multiple components/resources can be bundled together into one YAML file
+# '---' is used to separate the definitions of the components/resources
+
+# define the `Deployment` for the mongodb server
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: mongodb-admin-deployment
+
+spec:
+  replicas: 1   # No of pods
+
+  selector:     # Connects the deployment with the pods it should manage(label --> app:mongo_admin)
+    matchLabels:
+      app: mongo_admin
+
+  template:     # Template refers to the pods created under this deployment
+    metadata:
+      labels:
+        app: mongo_admin  # Assigned labels to the 1 pod
+
+    spec:
+      containers:
+      - name: mongodb-admin-container
+        image: mongo
+        ports:
+        - containerPort: 27017
+
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME  # Actual env name to be given to container/pod
+          valueFrom:
+            secretKeyRef:
+              name: mongo-admin-creds  # Name given to the secret in secret.yaml
+              key: username  # key defined in secret.yaml
+
+        - name: MONGO_INITDB_ROOT_PASSWORD  
+          valueFrom:
+            secretKeyRef:
+              name: mongo-admin-creds  
+              key: password 
+
+---
+# define the `Deployment` for mongo-express
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: mongo-express-deployment
+
+spec:
+  replicas: 1   # No of pods
+
+  selector:     # Connects the deployment with the pods it should manage(label --> app:mongo_admin)
+    matchLabels:
+      app: mongo_express
+
+  template:     # Template refers to the pods created under this deployment
+    metadata:
+      labels:
+        app: mongo_express  # Assigned labels to the 1 pod
+
+    spec:
+      containers:
+      - name: mongo-express-container
+        image: mongo-express
+        ports:
+        - containerPort: 8081   # mongo-express running on port 8081 in the container
+
+        env:
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME  # Actual env name to be given to container/pod
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-express-configmap  # Name given to the configmap in configmap.yaml
+              key: admin_user  # key defined in configmap.yaml
+
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD  
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-express-configmap  
+              key: admin_pass
+
+        - name: ME_CONFIG_MONGODB_SERVER  
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-express-configmap  
+              key: mongo_server_url
+---
+# define the `Deployment` for flask-app
+# set ImagePullPolicy to 'Never' to allow the use of the locally built image
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: flask-app-deployment
+
+spec:
+  replicas: 1   # No of pods
+
+  selector:     # Connects the deployment with the pods it should manage(label --> app:mongo_admin)
+    matchLabels:
+      app: flask_app
+
+  template:     # Template refers to the pods created under this deployment
+    metadata:
+      labels:
+        app: flask_app  # Assigned labels to the 1 pod
+
+    spec:
+      containers:
+      - name: blog-app
+        image: blog-app   # imagePullPolicy set to always if latest tag is used
+        imagePullPolicy: Never  # No fetching of image(if image present locally,use it or else error)
+        ports:
+        - containerPort: 5001   # flask running on port 5001 in the container

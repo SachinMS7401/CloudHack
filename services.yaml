@@ -1,0 +1,64 @@
+# note: YAML definitions for multiple components/resources can be bundled together into one YAML file
+# '---' is used to separate the definitions of the components/resources
+
+# define a service for the mongodb server
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: mongodb-admin-service
+
+spec:
+  selector:
+    app: mongo_admin  # sends network requests to pod with label app=mongo_admin
+
+  type: ClusterIP   # Within cluster only,cant be accessed from the outside
+
+  ports:
+    - protocol: 'TCP'
+      port: 27017   # Port to be exposed within the internal cluster(optional as port=targetPort if none)
+      targetPort: 27017   # Port inside the container
+
+---
+# define a service for mongo-express
+# set the type to LoadBalancer and configure the ports
+# don't forget to specify a nodePort as well! a nodePort exposes the pod to applications outside the cluster. this will allow you to access the frontend admin interface from your host system
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: mongo-express-service
+
+spec:
+  selector:
+    app: mongo_express  # sends network requests to pod with label app=mongo_express
+
+  ports:
+    - protocol: 'TCP'
+      port: 9999     #Port to be exposed on the Service's IP address
+      targetPort: 8081   # Port inside the container
+
+  type: LoadBalancer
+---
+# define a `Service` for flask-app
+# set the type to LoadBalancer and configure the ports
+# don't forget to specify a nodePort as well! a nodePort exposes the pod to applications outside the cluster. this will allow you to access the frontend admin interface from your host system
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: flask-app-service
+
+spec:
+  selector:
+    app: flask_app  # sends network requests to pod with label app=mongo_admin
+
+  ports:
+    - protocol: 'TCP'
+      port: 2121     #Port to be exposed on the Service's IP address
+      targetPort: 5001   # Port inside the container
+
+  type: LoadBalancer

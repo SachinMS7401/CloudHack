@@ -1,0 +1,11 @@
+# define the configuration for mongo-express
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: mongo-express-configmap
+
+data:
+  admin_user: 'sachin'
+  admin_pass: 'sachin'
+  mongo_server_url: 'mongodb-admin-service' # Not putting .default here ????
